@@ -2,11 +2,22 @@
 
 import { useEffect, useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
 import { api } from '@/lib/api'
 import { formatCurrency } from '@/lib/utils'
 import { DollarSign, ShoppingCart, TrendingUp, Users } from 'lucide-react'
 import type { DashboardStats, Order } from '@/types'
+import TableGroupCard from '@/components/orders/TableGroupCard'
+
+// Group orders by table, sorted by table number ascending
+function groupByTable(orders: Order[]) {
+    const map: Record<string, { tableId: string; tableNumber: number; orders: Order[] }> = {}
+    for (const order of orders) {
+        const key = order.table._id
+        if (!map[key]) map[key] = { tableId: order.table._id, tableNumber: order.table.number, orders: [] }
+        map[key].orders.push(order)
+    }
+    return Object.values(map).sort((a, b) => a.tableNumber - b.tableNumber)
+}
 
 export default function DashboardPage() {
     const [stats, setStats] = useState<DashboardStats | null>(null)
@@ -21,7 +32,7 @@ export default function DashboardPage() {
         try {
             const [statsResponse, ordersResponse] = await Promise.all([
                 api.getStats(),
-                api.getOrders({ status: 'ready,closed', limit: 10 })
+                api.getOrders({ status: 'ready,closed', limit: 200 })
             ])
 
             if (statsResponse.data) {
@@ -49,6 +60,8 @@ export default function DashboardPage() {
         )
     }
 
+    const tableGroups = groupByTable(activeOrders)
+
     return (
         <div className="space-y-8">
             <div>
@@ -62,115 +75,78 @@ export default function DashboardPage() {
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between pb-2">
-                        <CardTitle className="text-sm font-medium text-muted-foreground">
-                            Ventas del Día
-                        </CardTitle>
+                        <CardTitle className="text-sm font-medium text-muted-foreground">Ventas del Día</CardTitle>
                         <DollarSign className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">
-                            {formatCurrency(stats?.today.revenue || 0)}
-                        </div>
-                        <p className="text-xs text-muted-foreground mt-1">
-                            {stats?.today.completedOrders || 0} órdenes completadas
-                        </p>
+                        <div className="text-2xl font-bold">{formatCurrency(stats?.today.revenue || 0)}</div>
+                        <p className="text-xs text-muted-foreground mt-1">{stats?.today.completedOrders || 0} órdenes completadas</p>
                     </CardContent>
                 </Card>
 
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between pb-2">
-                        <CardTitle className="text-sm font-medium text-muted-foreground">
-                            Total Órdenes
-                        </CardTitle>
+                        <CardTitle className="text-sm font-medium text-muted-foreground">Total Órdenes</CardTitle>
                         <ShoppingCart className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">
-                            {stats?.today.totalOrders || 0}
-                        </div>
-                        <p className="text-xs text-muted-foreground mt-1">
-                            {stats?.today.activeOrders || 0} activas
-                        </p>
+                        <div className="text-2xl font-bold">{stats?.today.totalOrders || 0}</div>
+                        <p className="text-xs text-muted-foreground mt-1">{stats?.today.activeOrders || 0} activas</p>
                     </CardContent>
                 </Card>
 
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between pb-2">
-                        <CardTitle className="text-sm font-medium text-muted-foreground">
-                            Ticket Promedio
-                        </CardTitle>
+                        <CardTitle className="text-sm font-medium text-muted-foreground">Ticket Promedio</CardTitle>
                         <TrendingUp className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">
-                            {formatCurrency(stats?.today.averageTicket || 0)}
-                        </div>
-                        <p className="text-xs text-muted-foreground mt-1">
-                            Por orden
-                        </p>
+                        <div className="text-2xl font-bold">{formatCurrency(stats?.today.averageTicket || 0)}</div>
+                        <p className="text-xs text-muted-foreground mt-1">Por orden</p>
                     </CardContent>
                 </Card>
 
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between pb-2">
-                        <CardTitle className="text-sm font-medium text-muted-foreground">
-                            Meseros Activos
-                        </CardTitle>
+                        <CardTitle className="text-sm font-medium text-muted-foreground">Meseros Activos</CardTitle>
                         <Users className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">
-                            {stats?.topWaiters?.length || 0}
-                        </div>
-                        <p className="text-xs text-muted-foreground mt-1">
-                            Trabajando hoy
-                        </p>
+                        <div className="text-2xl font-bold">{stats?.topWaiters?.length || 0}</div>
+                        <p className="text-xs text-muted-foreground mt-1">Trabajando hoy</p>
                     </CardContent>
                 </Card>
             </div>
 
-            {/* Active Orders */}
-            <Card>
-                <CardHeader>
-                    <CardTitle>Órdenes Pendientes de Pago</CardTitle>
-                </CardHeader>
-                <CardContent>
-                    {activeOrders.length === 0 ? (
-                        <p className="text-center text-muted-foreground py-8">
-                            No hay órdenes pendientes
-                        </p>
-                    ) : (
-                        <div className="space-y-4">
-                            {activeOrders.map((order) => (
-                                <div
-                                    key={order._id}
-                                    className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors"
-                                >
-                                    <div className="flex-1">
-                                        <div className="flex items-center gap-3">
-                                            <p className="font-semibold">{order.orderNumber}</p>
-                                            <Badge variant={order.status === 'ready' ? 'success' : 'secondary'}>
-                                                {order.status === 'ready' ? 'Listo' : 'Cerrado'}
-                                            </Badge>
-                                        </div>
-                                        <p className="text-sm text-muted-foreground mt-1">
-                                            Mesa {order.table.number} • {order.waiter.name}
-                                        </p>
-                                    </div>
-                                    <div className="text-right">
-                                        <p className="font-bold text-lg">
-                                            {formatCurrency(order.total)}
-                                        </p>
-                                        <p className="text-sm text-muted-foreground">
-                                            {order.items.length} items
-                                        </p>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    )}
-                </CardContent>
-            </Card>
+            {/* Pending tables */}
+            <div>
+                <div className="flex items-center justify-between mb-4">
+                    <div>
+                        <h2 className="text-xl font-bold">Mesas Pendientes de Pago</h2>
+                        <p className="text-sm text-muted-foreground">{tableGroups.length} mesa{tableGroups.length !== 1 ? 's' : ''} con órdenes activas</p>
+                    </div>
+                </div>
+
+                {tableGroups.length === 0 ? (
+                    <Card>
+                        <CardContent className="py-12 text-center text-muted-foreground">
+                            No hay órdenes pendientes de pago
+                        </CardContent>
+                    </Card>
+                ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {tableGroups.map(group => (
+                            <TableGroupCard
+                                key={group.tableId}
+                                tableId={group.tableId}
+                                tableNumber={group.tableNumber}
+                                orders={group.orders}
+                                onPaymentSuccess={loadData}
+                            />
+                        ))}
+                    </div>
+                )}
+            </div>
         </div>
     )
 }
