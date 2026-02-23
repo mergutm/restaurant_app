@@ -1,0 +1,13 @@
+{
+    "name": "seed-database",
+    "version": "1.0.0",
+    "description": "Script para poblar la base de datos con datos iniciales",
+    "main": "seed.js",
+    "scripts": {
+        "seed": "node src/seed.js"
+    },
+    "dependencies": {
+        "mongoose": "^8.0.3",
+        "dotenv": "^16.3.1"
+    }
+}
