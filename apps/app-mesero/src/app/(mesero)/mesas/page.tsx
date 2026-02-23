@@ -41,7 +41,7 @@ export default function MesasPage() {
                 <p className="text-sm text-gray-500">Toca una mesa para iniciar un pedido</p>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                 {tables.filter(t => t.active).map(table => {
                     const cfg = statusConfig[table.status]
                     const canSelect = table.status === 'available' || table.status === 'occupied'

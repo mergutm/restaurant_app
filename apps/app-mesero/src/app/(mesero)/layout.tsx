@@ -19,7 +19,7 @@ export default function MeseroLayout({ children }: { children: React.ReactNode }
 
     return (
         <ProtectedRoute>
-            <div className="flex flex-col h-screen bg-gray-50 max-w-md mx-auto relative">
+            <div className="flex flex-col h-screen bg-gray-50 flex-1 w-full mx-auto relative">
                 {/* Top bar */}
                 <header className="bg-orange-500 text-white px-4 py-3 flex items-center justify-between shadow-md shrink-0">
                     <div>
@@ -41,7 +41,7 @@ export default function MeseroLayout({ children }: { children: React.ReactNode }
                 </main>
 
                 {/* Bottom navigation */}
-                <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md bg-white border-t border-gray-200 flex z-50">
+                <nav className="fixed bottom-0 left-0 w-full bg-white border-t border-gray-200 flex z-50">
                     {navItems.map(({ href, label, icon: Icon }) => {
                         const active = pathname.startsWith(href)
                         return (

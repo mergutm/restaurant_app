@@ -452,11 +452,16 @@ http://localhost:3003/
 
 
 
-# Mesero
+# API
 
-http://localhost:3002/
+http://localhost:3001/
 
 
 # Caja
 
-http://localhost:3001/
+http://localhost:3002/
+
+
+# Mesero
+
+http://localhost:3004/

@@ -45,7 +45,7 @@ export default function CocinaPage() {
             // But if there's an auth layer we might need a token. We'll try without first, else we rely solely on websockets + mock.
             // Since this is the kitchen dashboard, often it's protected. If it fails due to 401, we'd need to login first.
             // Let's assume it allows fetching or we just fetch and catch silently.
-            const res = await axios.get(`${API_URL}/api/orders?limit=100`, {
+            const res = await axios.get(`${API_URL}/api/orders?limit=100&sort=createdAt`, {
                 // If the app requires token, we'd check localStorage here, but cocina app doesn't have an auth module built yet. 
                 // We will send credentials if present.
                 headers: {
@@ -82,7 +82,7 @@ export default function CocinaPage() {
         newSocket.on('order:created', (newOrder: Order) => {
             setOrders(prev => {
                 if (prev.find(o => o._id === newOrder._id)) return prev;
-                return [newOrder, ...prev]
+                return [...prev, newOrder]
             })
         })
 

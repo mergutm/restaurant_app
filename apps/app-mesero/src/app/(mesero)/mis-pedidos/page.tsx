@@ -67,47 +67,49 @@ export default function MisPedidosPage() {
     }
 
     return (
-        <div className="p-4 space-y-3">
-            <div className="mb-2">
+        <div className="p-4">
+            <div className="mb-4">
                 <h2 className="text-lg font-bold text-gray-900">Mis Pedidos</h2>
                 <p className="text-sm text-gray-500">{activeOrders.length} pedido{activeOrders.length !== 1 ? 's' : ''} activo{activeOrders.length !== 1 ? 's' : ''}</p>
             </div>
 
-            {activeOrders.map(order => {
-                const cfg = statusConfig[order.status as keyof typeof statusConfig]
-                if (!cfg) return null
-                const Icon = cfg.icon
-                return (
-                    <div key={order._id} className={cn('rounded-2xl border-2 p-4', cfg.color)}>
-                        <div className="flex items-center justify-between mb-2">
-                            <div>
-                                <p className="font-bold text-gray-900 text-sm">{order.orderNumber}</p>
-                                <p className="text-xs text-gray-500">Mesa #{order.table?.number}</p>
-                            </div>
-                            <span className={cn('flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold', cfg.badge)}>
-                                <Icon className="w-3.5 h-3.5" />
-                                {cfg.label}
-                            </span>
-                        </div>
-
-                        <div className="space-y-1 mb-3">
-                            {order.items.map((item, i) => (
-                                <div key={i} className="flex justify-between text-sm text-gray-700">
-                                    <span>{item.quantity}× {item.product?.name ?? 'Producto'}</span>
-                                    <span className="text-gray-500">{formatCurrency(item.subtotal)}</span>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {activeOrders.map(order => {
+                    const cfg = statusConfig[order.status as keyof typeof statusConfig]
+                    if (!cfg) return null
+                    const Icon = cfg.icon
+                    return (
+                        <div key={order._id} className={cn('rounded-2xl border-2 p-4 flex flex-col', cfg.color)}>
+                            <div className="flex items-center justify-between mb-4">
+                                <div>
+                                    <p className="font-bold text-gray-900 text-sm">{order.orderNumber}</p>
+                                    <p className="text-xs text-gray-500">Mesa #{order.table?.number}</p>
                                 </div>
-                            ))}
-                        </div>
+                                <span className={cn('flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold', cfg.badge)}>
+                                    <Icon className="w-3.5 h-3.5" />
+                                    {cfg.label}
+                                </span>
+                            </div>
 
-                        <div className="flex items-center justify-between pt-2 border-t border-black/5">
-                            <span className="text-xs text-gray-500">
-                                {new Date(order.createdAt).toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' })}
-                            </span>
-                            <span className="font-bold text-gray-900">{formatCurrency(order.total)}</span>
+                            <div className="space-y-2 mb-4 flex-grow">
+                                {order.items.map((item, i) => (
+                                    <div key={i} className="flex justify-between text-sm text-gray-700">
+                                        <span>{item.quantity}× {item.product?.name ?? 'Producto'}</span>
+                                        <span className="text-gray-500 font-medium">{formatCurrency(item.subtotal)}</span>
+                                    </div>
+                                ))}
+                            </div>
+
+                            <div className="flex items-center justify-between pt-3 border-t border-black/10 mt-auto">
+                                <span className="text-xs text-gray-500 font-medium">
+                                    {new Date(order.createdAt).toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' })}
+                                </span>
+                                <span className="font-bold text-gray-900">{formatCurrency(order.total)}</span>
+                            </div>
                         </div>
-                    </div>
-                )
-            })}
+                    )
+                })}
+            </div>
         </div>
     )
 }
