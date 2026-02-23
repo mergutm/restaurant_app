@@ -23,7 +23,8 @@ const getOrders = async (req, res, next) => {
         const filter = {};
 
         if (status) {
-            filter.status = status;
+            const statuses = String(status).split(',').map(s => s.trim()).filter(Boolean);
+            filter.status = statuses.length === 1 ? statuses[0] : { $in: statuses };
         }
 
         if (tableId) {

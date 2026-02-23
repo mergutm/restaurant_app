@@ -24,9 +24,12 @@ export default function MisPedidosPage() {
     const loadOrders = useCallback(async () => {
         if (!user) return
         try {
-            const res = await api.getOrders({ waiterId: user._id, status: 'pending,preparing,ready' })
-            const data = res.data.data?.orders ?? res.data.data ?? []
-            setOrders(data)
+            // Fetch all orders by this waiter (server filters by waiterId),
+            // then locally filter active statuses as a robust safety net.
+            const res = await api.getOrders({ waiterId: user._id, limit: 200 })
+            const all: Order[] = res.data.data?.orders ?? res.data.data ?? []
+            const active = all.filter(o => ['pending', 'preparing', 'ready'].includes(o.status))
+            setOrders(active)
         } catch (e) {
             console.error(e)
         } finally {
