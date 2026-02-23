@@ -444,3 +444,19 @@ db.products.countDocuments()
 # Conectarse a MongoDB
 docker exec -it restaurant-mongodb mongosh "mongodb://admin:admin123@localhost:27017/restaurant?authSource=admin"
 ```
+
+
+# Cocina
+
+http://localhost:3003/
+
+
+
+# Mesero
+
+http://localhost:3002/
+
+
+# Caja
+
+http://localhost:3001/

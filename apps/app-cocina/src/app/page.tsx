@@ -3,7 +3,8 @@
 import { useEffect, useState } from 'react'
 import { io, Socket } from 'socket.io-client'
 import axios from 'axios'
-import { Clock, ChefHat, CheckCircle2 } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { Clock, ChefHat, CheckCircle2, LogOut } from 'lucide-react'
 
 // Define interfaces roughly based on the backend scheme
 interface OrderItem {
@@ -29,6 +30,14 @@ export default function CocinaPage() {
     const [orders, setOrders] = useState<Order[]>([])
     const [socket, setSocket] = useState<Socket | null>(null)
     const [isConnected, setIsConnected] = useState(false)
+    const router = useRouter()
+
+    useEffect(() => {
+        // Simple auth check on load
+        if (typeof window !== 'undefined' && !localStorage.getItem('token')) {
+            router.push('/login')
+        }
+    }, [router])
 
     const fetchOrders = async () => {
         try {
@@ -47,8 +56,12 @@ export default function CocinaPage() {
             })
             const data = res.data?.data?.orders || []
             setOrders(data)
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error fetching orders:', error)
+            if (error?.response?.status === 401) {
+                if (typeof window !== 'undefined') localStorage.removeItem('token')
+                router.push('/login')
+            }
         }
     }
 
@@ -99,9 +112,14 @@ export default function CocinaPage() {
             })
             // Update locally to be more responsive (will be synced via ws anyway)
             setOrders(prev => prev.map(o => o._id === orderId ? { ...o, status: newStatus as any } : o))
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error changing order status:', error)
-            alert('No se pudo actualizar el estado de la orden. ¿Iniciaste sesión?')
+            if (error?.response?.status === 401) {
+                if (typeof window !== 'undefined') localStorage.removeItem('token')
+                router.push('/login')
+            } else {
+                alert('No se pudo actualizar el estado de la orden.')
+            }
         }
     }
 
@@ -148,6 +166,14 @@ export default function CocinaPage() {
         </div>
     )
 
+    const handleLogout = () => {
+        if (typeof window !== 'undefined') {
+            localStorage.removeItem('token')
+            localStorage.removeItem('user')
+            router.push('/login')
+        }
+    }
+
     return (
         <main className="min-h-screen p-6 bg-gray-50 text-gray-900">
             <div className="max-w-7xl mx-auto">
@@ -159,9 +185,18 @@ export default function CocinaPage() {
                         </h1>
                         <p className="text-gray-500 mt-1">Gestión de pedidos en tiempo real</p>
                     </div>
-                    <div className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium ${isConnected ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                        <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`} />
-                        {isConnected ? 'Conectado a WebSocket' : 'Desconectado'}
+                    <div className="flex items-center gap-4">
+                        <div className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium ${isConnected ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                            <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`} />
+                            {isConnected ? 'Conectado' : 'Desconectado'}
+                        </div>
+                        <button
+                            onClick={handleLogout}
+                            className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-full transition"
+                            title="Cerrar sesión"
+                        >
+                            <LogOut className="w-5 h-5" />
+                        </button>
                     </div>
                 </div>
 

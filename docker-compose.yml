@@ -174,8 +174,8 @@ services:
       context: ./apps/app-cocina
       dockerfile: Dockerfile
       args:
-        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:3000}
-        NEXT_PUBLIC_WS_URL: ${NEXT_PUBLIC_WS_URL:-http://localhost:3001}
+        NEXT_PUBLIC_API_URL: http://localhost:3100
+        NEXT_PUBLIC_WS_URL: http://localhost:3001
     container_name: restaurant-app-cocina
     restart: unless-stopped
     environment:
