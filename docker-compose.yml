@@ -190,6 +190,8 @@ services:
       - websocket
     networks:
       - restaurant-network
+    volumes:
+      - /app/node_modules
     healthcheck:
       test: [ "CMD", "wget", "-qO-", "http://127.0.0.1:3003/api/health" ]
       interval: 30s
@@ -219,6 +221,8 @@ services:
     depends_on:
       - api
       - websocket
+    volumes:
+      - /app/node_modules
     networks:
       - restaurant-network
     healthcheck:

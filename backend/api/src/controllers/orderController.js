@@ -1,5 +1,6 @@
 const { Order, Product, Table, User } = require('../models');
 const { NotFoundError, ValidationError } = require('../utils/errors');
+const { emitEvent } = require('../utils/socket');
 
 /**
  * Obtener todas las órdenes
@@ -156,6 +157,9 @@ const createOrder = async (req, res, next) => {
         table.status = 'occupied';
         await table.save();
 
+        // Emitir evento WebSocket
+        emitEvent('order:create', order);
+
         res.status(201).json({
             status: 'success',
             data: {
@@ -203,6 +207,8 @@ const updateOrderStatus = async (req, res, next) => {
         }
 
         await order.save();
+
+        emitEvent('order:status_changed', order);
 
         res.json({
             status: 'success',
@@ -267,6 +273,8 @@ const addOrderItems = async (req, res, next) => {
 
         await order.save();
 
+        emitEvent('order:update', order);
+
         res.json({
             status: 'success',
             data: {
@@ -317,6 +325,8 @@ const payOrder = async (req, res, next) => {
             table.status = 'available';
             await table.save();
         }
+
+        emitEvent('order:paid', order);
 
         res.json({
             status: 'success',
