@@ -49,4 +49,7 @@ export const api = {
 
     updateOrderStatus: (id: string, status: string) =>
         apiClient.patch(`/api/orders/${id}/status`, { status }),
+
+    markItemDelivered: (orderId: string, itemId: string) =>
+        apiClient.patch(`/api/orders/${orderId}/items/${itemId}/status`, { status: 'delivered' }),
 }

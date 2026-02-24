@@ -126,7 +126,11 @@ export default function CocinaPage() {
     // Filter active orders
     const pendingOrders = orders.filter(o => o.status === 'pending')
     const preparingOrders = orders.filter(o => o.status === 'preparing')
-    const readyOrders = orders.filter(o => o.status === 'ready')
+    // Hide ready orders where all items have already been delivered to the table
+    const readyOrders = orders.filter(o =>
+        o.status === 'ready' &&
+        !o.items.every((item: any) => item.status === 'delivered')
+    )
 
     const OrderCard = ({ order, nextStatus, nextLabel, icon: Icon, color }: any) => (
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-4 flex flex-col gap-3">

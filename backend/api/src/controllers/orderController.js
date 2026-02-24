@@ -361,6 +361,47 @@ const deleteOrder = async (req, res, next) => {
     }
 };
 
+/**
+ * Actualizar estado de un ítem de orden
+ * PATCH /api/orders/:id/items/:itemId/status
+ */
+const updateItemStatus = async (req, res, next) => {
+    try {
+        const { status } = req.body;
+        const validItemStatuses = ['pending', 'preparing', 'ready', 'delivered'];
+
+        if (!validItemStatuses.includes(status)) {
+            throw new ValidationError(`Estado de ítem inválido. Debe ser uno de: ${validItemStatuses.join(', ')}`);
+        }
+
+        const order = await Order.findById(req.params.id);
+        if (!order) throw new NotFoundError('Orden no encontrada');
+
+        const item = order.items.id(req.params.itemId);
+        if (!item) throw new NotFoundError('Ítem no encontrado');
+
+        item.status = status;
+
+        // If all items are delivered, auto-advance order to closed
+        const allDelivered = order.items.every(i => i.status === 'delivered');
+        if (allDelivered && order.status === 'ready') {
+            order.status = 'closed';
+            order.closedAt = new Date();
+        }
+
+        await order.save();
+
+        emitEvent('order:status_changed', order);
+
+        res.json({
+            status: 'success',
+            data: { order }
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
 module.exports = {
     getOrders,
     getOrder,
@@ -368,5 +409,6 @@ module.exports = {
     updateOrderStatus,
     addOrderItems,
     payOrder,
-    deleteOrder
+    deleteOrder,
+    updateItemStatus
 };

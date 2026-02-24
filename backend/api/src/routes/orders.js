@@ -62,4 +62,11 @@ router.post(
  */
 router.delete('/:id', authenticate, authorize('admin'), orderController.deleteOrder);
 
+/**
+ * @route   PATCH /api/orders/:id/items/:itemId/status
+ * @desc    Actualizar estado de un ítem individual
+ * @access  Private (Waiter, Kitchen, Admin)
+ */
+router.patch('/:id/items/:itemId/status', authenticate, orderController.updateItemStatus);
+
 module.exports = router;

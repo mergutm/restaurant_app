@@ -14,6 +14,7 @@ const statusConfig = {
     pending: { label: 'Pendiente', color: 'bg-yellow-50 border-yellow-200', badge: 'bg-yellow-100 text-yellow-700', icon: Clock },
     preparing: { label: 'Preparando', color: 'bg-blue-50 border-blue-200', badge: 'bg-blue-100 text-blue-700', icon: Flame },
     ready: { label: 'Listo ✓', color: 'bg-green-50 border-green-300', badge: 'bg-green-100 text-green-700', icon: CheckCircle2 },
+    closed: { label: 'Entregado', color: 'bg-gray-50 border-gray-200', badge: 'bg-gray-100 text-gray-600', icon: CheckCircle2 },
 }
 
 export default function MisPedidosPage() {
@@ -24,11 +25,10 @@ export default function MisPedidosPage() {
     const loadOrders = useCallback(async () => {
         if (!user) return
         try {
-            // Fetch all orders by this waiter (server filters by waiterId),
-            // then locally filter active statuses as a robust safety net.
             const res = await api.getOrders({ waiterId: user._id, limit: 200 })
             const all: Order[] = res.data.data?.orders ?? res.data.data ?? []
-            const active = all.filter(o => ['pending', 'preparing', 'ready'].includes(o.status))
+            // Show pending/preparing/ready/closed (delivered but not paid), exclude paid and cancelled
+            const active = all.filter(o => ['pending', 'preparing', 'ready', 'closed'].includes(o.status))
             setOrders(active)
         } catch (e) {
             console.error(e)
@@ -48,7 +48,7 @@ export default function MisPedidosPage() {
     }, [loadOrders])
 
     const activeOrders = orders.filter(o =>
-        ['pending', 'preparing', 'ready'].includes(o.status)
+        ['pending', 'preparing', 'ready', 'closed'].includes(o.status)
     )
 
     if (isLoading) {

@@ -1,13 +1,13 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { api } from '@/lib/api'
 import type { Table, Order } from '@/types'
 import { cn, formatCurrency } from '@/lib/utils'
 import {
     Users, MapPin, X, Clock, Flame, CheckCircle2,
-    PackageCheck, AlertCircle, ShoppingBag, Plus
+    PackageCheck, AlertCircle, ShoppingBag, Plus, Truck
 } from 'lucide-react'
 
 // ─── Status helpers ────────────────────────────────────────────────────────────
@@ -43,6 +43,7 @@ export default function MesasPage() {
     const [selectedTable, setSelectedTable] = useState<Table | null>(null)
     const [tableOrders, setTableOrders] = useState<Order[]>([])
     const [ordersLoading, setOrdersLoading] = useState(false)
+    const [deliveringItem, setDeliveringItem] = useState<string | null>(null)
     const router = useRouter()
 
     useEffect(() => {
@@ -65,9 +66,10 @@ export default function MesasPage() {
             try {
                 const res = await api.getOrders({ tableId: table._id })
                 const orders: Order[] = res.data.data?.orders ?? res.data.data ?? []
-                // Active orders first, then paid/closed
-                const active = orders.filter(o => ['pending', 'preparing', 'ready'].includes(o.status))
-                const other = orders.filter(o => ['closed', 'paid', 'cancelled'].includes(o.status))
+                // Only show active (non-paid, non-cancelled) orders
+                const visible = orders.filter(o => !['paid', 'cancelled'].includes(o.status))
+                const active = visible.filter(o => ['pending', 'preparing', 'ready'].includes(o.status))
+                const other = visible.filter(o => ['closed'].includes(o.status))
                 setTableOrders([...active, ...other])
             } catch (e) {
                 console.error(e)
@@ -76,6 +78,26 @@ export default function MesasPage() {
             }
         }
     }
+
+    const deliverItem = useCallback(async (orderId: string, itemId: string) => {
+        setDeliveringItem(itemId)
+        try {
+            await api.markItemDelivered(orderId, itemId)
+            // Refresh orders for this table
+            if (selectedTable) {
+                const res = await api.getOrders({ tableId: selectedTable._id })
+                const orders: Order[] = res.data.data?.orders ?? res.data.data ?? []
+                const visible = orders.filter(o => !['paid', 'cancelled'].includes(o.status))
+                const active = visible.filter(o => ['pending', 'preparing', 'ready'].includes(o.status))
+                const other = visible.filter(o => ['closed'].includes(o.status))
+                setTableOrders([...active, ...other])
+            }
+        } catch (e) {
+            console.error(e)
+        } finally {
+            setDeliveringItem(null)
+        }
+    }, [selectedTable])
 
     const closeModal = () => {
         setSelectedTable(null)
@@ -203,11 +225,16 @@ export default function MesasPage() {
                                                     </span>
                                                 </div>
 
-                                                {/* Items with per-item status */}
+                                                {/* Items with per-item status + deliver button */}
                                                 <div className="p-4 space-y-3">
                                                     {order.items.map((item, idx) => {
+                                                        const itemId = (item as any)._id as string
                                                         const itemStatus = item.status ?? 'pending'
                                                         const isCfg = itemStatusConfig[itemStatus] ?? itemStatusConfig.pending
+                                                        // Show deliver button when ORDER is ready AND this item hasn't been delivered yet.
+                                                        // (Kitchen marks the order as ready, not individual items.)
+                                                        const canDeliver = order.status === 'ready' && itemStatus !== 'delivered'
+                                                        const isDelivering = deliveringItem === itemId
                                                         return (
                                                             <div key={idx} className="flex items-start gap-3">
                                                                 <img
@@ -228,6 +255,17 @@ export default function MesasPage() {
                                                                         {isCfg.label}
                                                                     </span>
                                                                     <span className="text-xs text-gray-500">{formatCurrency(item.subtotal)}</span>
+                                                                    {canDeliver && itemId && (
+                                                                        <button
+                                                                            onClick={() => deliverItem(order._id, itemId)}
+                                                                            disabled={isDelivering}
+                                                                            className="flex items-center gap-1 text-xs px-2 py-1 bg-teal-500 text-white rounded-lg hover:bg-teal-600 transition disabled:opacity-50"
+                                                                        >
+                                                                            {isDelivering
+                                                                                ? <span>...</span>
+                                                                                : <><Truck className="w-3 h-3" /><span>Entregar</span></>}
+                                                                        </button>
+                                                                    )}
                                                                 </div>
                                                             </div>
                                                         )
